@@ -72,8 +72,12 @@ image = (
 )
 
 # mount for the entire ai-toolkit directory
-# example: "/Users/username/ai-toolkit" is the local directory, "/root/ai-toolkit" is the remote directory
-code_mount = modal.Mount.from_local_dir("/Users/username/ai-toolkit", remote_path="/root/ai-toolkit")
+# example: "/Users/username/ai-toolkit" is the local directory, "/root/ai-toolkit" is the remote directory. excluded venv and pycache folders from uploading to modal to prevent 504 error.
+code_mount = modal.Mount.from_local_dir(
+    "/Users/username/ai-toolkit", 
+    remote_path="/root/ai-toolkit",
+    condition=lambda path: not any(segment in ['venv', '__pycache__'] for segment in path.split(os.sep))
+)
 
 # create the Modal app with the necessary mounts and volumes
 app = modal.App(name="flux-lora-training", image=image, mounts=[code_mount], volumes={MOUNT_DIR: model_volume})
