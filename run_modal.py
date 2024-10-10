@@ -74,7 +74,7 @@ image = (
 # mount for the entire ai-toolkit directory
 # example: "/Users/username/ai-toolkit" is the local directory, "/root/ai-toolkit" is the remote directory
 code_mount = modal.Mount.from_local_dir(
-    "C:/_ai-toolkit_2/ai-toolkit", 
+    "/Users/username/ai-toolkit", 
     remote_path="/root/ai-toolkit",
     condition=lambda path: not any(segment in ['venv', '__pycache__'] for segment in path.split(os.sep))
 )
