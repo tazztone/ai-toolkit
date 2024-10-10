@@ -30,7 +30,7 @@ MOUNT_DIR = "/root/ai-toolkit/modal_output"  # modal_output, due to "cannot moun
 
 # define modal app
 image = (
-    modal.Image.debian_slim(python_version="3.11")
+    modal.Image.from_registry("nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.11")
     # install required system and pip packages, more about this modal approach: https://modal.com/docs/examples/dreambooth_app
     .apt_install("libgl1", "libglib2.0-0")
     .pip_install(
@@ -73,7 +73,11 @@ image = (
 
 # mount for the entire ai-toolkit directory
 # example: "/Users/username/ai-toolkit" is the local directory, "/root/ai-toolkit" is the remote directory
-code_mount = modal.Mount.from_local_dir("/Users/username/ai-toolkit", remote_path="/root/ai-toolkit")
+code_mount = modal.Mount.from_local_dir(
+    "C:/_ai-toolkit_2/ai-toolkit", 
+    remote_path="/root/ai-toolkit",
+    condition=lambda path: not any(segment in ['venv', '__pycache__'] for segment in path.split(os.sep))
+)
 
 # create the Modal app with the necessary mounts and volumes
 app = modal.App(name="flux-lora-training", image=image, mounts=[code_mount], volumes={MOUNT_DIR: model_volume})
@@ -102,6 +106,8 @@ def print_end_message(jobs_completed, jobs_failed):
 
 
 @app.function(
+    # optional: save huggingface token in your modal "secrets" settings.
+#    secrets=[modal.Secret.from_name("my-huggingface-secret")],
     # request a GPU with at least 24GB VRAM
     # more about modal GPU's: https://modal.com/docs/guide/gpu
     gpu="A100", # gpu="H100"
