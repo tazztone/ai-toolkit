@@ -1,8 +1,17 @@
 '''
 
 ostris/ai-toolkit on https://modal.com
+Updated for latest Modal API (2024) - removed deprecated mount patterns
+
 Run training with the following command:
 modal run run_modal.py --config-file-list-str=/root/ai-toolkit/config/whatever_you_want.yml
+
+Key changes made:
+- Updated to Python 3.12
+- Replaced deprecated modal.Mount.from_local_python_packages with image.add_local_python_source
+- Removed mounts parameter from App, added source directly to image
+- Updated package versions to use latest available
+- Modernized app execution with app.run() context
 
 '''
 
@@ -30,53 +39,51 @@ MOUNT_DIR = "/root/ai-toolkit/modal_output"  # modal_output, due to "cannot moun
 
 # define modal app
 image = (
-    modal.Image.debian_slim(python_version="3.11")
+    modal.Image.from_registry("nvidia/cuda:12.9.0-devel-ubuntu22.04", add_python="3.12")
     # install required system and pip packages, more about this modal approach: https://modal.com/docs/examples/dreambooth_app
     .apt_install("libgl1", "libglib2.0-0")
     .pip_install(
         "python-dotenv",
-        "torch", 
-        "diffusers[torch]", 
-        "transformers", 
-        "ftfy", 
-        "torchvision", 
-        "oyaml", 
-        "opencv-python", 
+        "torch",
+        "diffusers[torch]",
+        "transformers",
+        "ftfy",
+        "torchvision",
+        "oyaml",
+        "opencv-python",
         "albumentations",
         "safetensors",
-        "lycoris-lora==1.8.3",
+        "lycoris-lora",
         "flatten_json",
         "pyyaml",
-        "tensorboard", 
-        "kornia", 
-        "invisible-watermark", 
-        "einops", 
-        "accelerate", 
-        "toml", 
+        "tensorboard",
+        "kornia",
+        "invisible-watermark",
+        "einops",
+        "accelerate",
+        "toml",
         "pydantic",
         "omegaconf",
         "k-diffusion",
         "open_clip_torch",
         "timm",
         "prodigyopt",
-        "controlnet_aux==0.0.7",
+        "controlnet_aux",
         "bitsandbytes",
         "hf_transfer",
-        "lpips", 
-        "pytorch_fid", 
-        "optimum-quanto", 
-        "sentencepiece", 
-        "huggingface_hub", 
+        "lpips",
+        "pytorch_fid",
+        "optimum-quanto",
+        "sentencepiece",
+        "huggingface_hub",
         "peft"
     )
+    # Add local Python source code directly to the image (replaces deprecated mount pattern)
+    .add_local_python_source(".")
 )
 
-# mount for the entire ai-toolkit directory
-# example: "/Users/username/ai-toolkit" is the local directory, "/root/ai-toolkit" is the remote directory
-code_mount = modal.Mount.from_local_dir("/Users/username/ai-toolkit", remote_path="/root/ai-toolkit")
-
-# create the Modal app with the necessary mounts and volumes
-app = modal.App(name="flux-lora-training", image=image, mounts=[code_mount], volumes={MOUNT_DIR: model_volume})
+# create the Modal app with the updated image and volumes
+app = modal.App(name="flux-lora-training", image=image, volumes={MOUNT_DIR: model_volume})
 
 # Check if we have DEBUG_TOOLKIT in env
 if os.environ.get("DEBUG_TOOLKIT", "0") == "1":
@@ -172,4 +179,5 @@ if __name__ == "__main__":
     # convert list of config files to a comma-separated string for Modal compatibility
     config_file_list_str = ",".join(args.config_file_list)
 
-    main.call(config_file_list_str=config_file_list_str, recover=args.recover, name=args.name)
+    with app.run():
+        main.remote(config_file_list_str=config_file_list_str, recover=args.recover, name=args.name)
