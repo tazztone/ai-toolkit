@@ -39,7 +39,7 @@ MOUNT_DIR = "/root/ai-toolkit/modal_output"  # modal_output, due to "cannot moun
 
 # define modal app
 image = (
-    modal.Image.from_registry("nvidia/cuda:12.9.0-devel-ubuntu22.04", add_python="3.12")
+    modal.Image.debian_slim(python_version="3.12")
     # install required system and pip packages, more about this modal approach: https://modal.com/docs/examples/dreambooth_app
     .apt_install("libgl1", "libglib2.0-0")
     .pip_install(
@@ -78,8 +78,12 @@ image = (
         "huggingface_hub",
         "peft"
     )
-    # Add local Python source code directly to the image (replaces deprecated mount pattern)
-    .add_local_python_source(".")
+    # Add local directory to the image with proper ignore patterns
+    .add_local_dir(
+        ".",
+        remote_path="/root/ai-toolkit",
+        ignore=["venv", "__pycache__", ".git", "*.pyc", ".DS_Store", "node_modules", "*.log"]
+    )
 )
 
 # create the Modal app with the updated image and volumes
@@ -109,6 +113,8 @@ def print_end_message(jobs_completed, jobs_failed):
 
 
 @app.function(
+    # optional: save huggingface token in your modal "secrets" settings.
+    secrets=[modal.Secret.from_name("my-huggingface-secret")],
     # request a GPU with at least 24GB VRAM
     # more about modal GPU's: https://modal.com/docs/guide/gpu
     gpu="A100", # gpu="H100"
