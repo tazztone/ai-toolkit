@@ -43,40 +43,45 @@ image = (
     # install required system and pip packages, more about this modal approach: https://modal.com/docs/examples/dreambooth_app
     .apt_install("libgl1", "libglib2.0-0")
     .pip_install(
-        "python-dotenv",
-        "torch",
-        "diffusers[torch]",
-        "transformers",
-        "ftfy",
-        "torchvision",
-        "oyaml",
-        "opencv-python",
-        "albumentations",
+        "torchao==0.10.0",
         "safetensors",
-        "lycoris-lora",
+        "git+https://github.com/jaretburkett/easy_dwpose.git",
+        "git+https://github.com/huggingface/diffusers@7ea065c5070a5278259e6f1effa9dccea232e62a",
+        "transformers==4.52.4",
+        "lycoris-lora==1.8.3",
         "flatten_json",
         "pyyaml",
+        "oyaml",
         "tensorboard",
         "kornia",
         "invisible-watermark",
         "einops",
         "accelerate",
         "toml",
+        "albumentations==1.4.15",
+        "albucore==0.0.16",
         "pydantic",
         "omegaconf",
         "k-diffusion",
         "open_clip_torch",
         "timm",
         "prodigyopt",
-        "controlnet_aux",
+        "controlnet_aux==0.0.10",
+        "python-dotenv",
         "bitsandbytes",
         "hf_transfer",
         "lpips",
         "pytorch_fid",
-        "optimum-quanto",
+        "optimum-quanto==0.2.4",
         "sentencepiece",
         "huggingface_hub",
-        "peft"
+        "peft",
+        "gradio",
+        "python-slugify",
+        "opencv-python",
+        "pytorch-wavelets==1.3.0",
+        "matplotlib==3.10.1",
+        "setuptools==69.5.1"
     )
     # Add local directory to the image with proper ignore patterns
     .add_local_dir(
@@ -113,8 +118,6 @@ def print_end_message(jobs_completed, jobs_failed):
 
 
 @app.function(
-    # optional: save huggingface token in your modal "secrets" settings.
-    secrets=[modal.Secret.from_name("my-huggingface-secret")],
     # request a GPU with at least 24GB VRAM
     # more about modal GPU's: https://modal.com/docs/guide/gpu
     gpu="A100", # gpu="H100"
