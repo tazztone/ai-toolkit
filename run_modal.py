@@ -121,6 +121,8 @@ def print_end_message(jobs_completed, jobs_failed):
 
 
 @app.function(
+    # optional: save huggingface token in your modal "secrets" settings.
+    secrets=[modal.Secret.from_name("my-huggingface-secret")],
     # request a GPU with at least 24GB VRAM
     # more about modal GPU's: https://modal.com/docs/guide/gpu
     gpu="A100", # gpu="H100"
